@@ -4,6 +4,7 @@ import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smackx.bytestreams.socks5.Socks5Proxy;
 import org.nhindirect.common.tooling.Commands;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -37,6 +38,18 @@ public class DirectImClientApplication implements CommandLineRunner
 	@Override
 	public void run(String... args) throws Exception
 	{
+		
+		/*
+		 * disable the local SOCKS5 proxy in favor of a server proxy
+		 * local proxies are problematic when going across networks let alone organizational boundries
+		 * Smack uses the "ibb" property to indicate that only IBB should be use.  The use of SOCKS5 server proxies
+		 * still imposes a security risk as it is not encrypted by default.  
+		 * NOTE: The use of IBB is suppose to be used only as a fallback, however it is common denominator that meets the 
+		 * security requirements out of the box.  It is also VERY slow.
+		 * TODO: Looking for an alternative XEP that performs better and meets security requirements.
+		 */
+		Socks5Proxy.setLocalSocks5ProxyEnabled(false);
+		System.setProperty("ibb", "true");
 		
 		final XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder().setUsernameAndPassword(username, password)
 		.setXmppDomain(domain)
