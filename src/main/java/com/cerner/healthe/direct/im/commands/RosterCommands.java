@@ -44,7 +44,7 @@ public class RosterCommands
     	this.roster.setSubscriptionMode(Roster.SubscriptionMode.accept_all);
     	
     	this.rosterPrinter = new RosterPrinter(roster);
-    	
+
     	roster.addRosterListener(new RosterListener() 
     	{
     		public void entriesAdded(Collection<Jid> addresses) {}
@@ -52,14 +52,16 @@ public class RosterCommands
     		public void entriesUpdated(Collection<Jid> addresses) {}
     		public void presenceChanged(Presence presence) 
     		{
-    			System.out.println("Presence changed. From: " + presence.getFrom().asBareJid() + " Status: " + RosterPrinter.getPresenceDisplay(presence));
+    			final Jid jid = presence.getFrom();
+    			
+    			System.out.println("Presence changed. From: " + jid.asBareJid() + " Status: " + RosterPrinter.getPresenceDisplay(presence));
     			System.out.println(">");
     		}
     	});
     }
     
 	@Command(name = "ListContacts", usage = LIST_CONTACTS)
-    public void listPolicies(String[] args)
+    public void listContacts(String[] args)
 	{
 		rosterPrinter.printRecords(roster.getEntries());
 	}
@@ -105,4 +107,5 @@ public class RosterCommands
 		
 		System.out.println("Contact " + contact + " not found in roster");
 	}
+
 }

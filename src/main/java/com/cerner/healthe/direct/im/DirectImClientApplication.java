@@ -11,6 +11,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.cerner.healthe.direct.im.commands.ChatCommands;
+import com.cerner.healthe.direct.im.commands.FileTransferCommands;
 import com.cerner.healthe.direct.im.commands.RosterCommands;
 
 @SpringBootApplication
@@ -74,6 +75,8 @@ public class DirectImClientApplication implements CommandLineRunner
 		commands.register(new RosterCommands(con));
 		
 		commands.register(new ChatCommands(con));
+		
+		commands.register(new FileTransferCommands(con));
 		
 		commands.runInteractive();
 	}

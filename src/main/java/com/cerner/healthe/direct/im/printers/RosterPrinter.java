@@ -6,11 +6,14 @@ import java.util.Collection;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
+import org.jxmpp.jid.EntityFullJid;
+import org.jxmpp.jid.Jid;
 
 public class RosterPrinter extends AbstractRecordPrinter<RosterEntry>
 {
 	protected static final String ROSTER_ENTRY_NAME = "Name";
 	protected static final String ROSTER_ENTRY_ID = "ID/JID";
+	protected static final String ROSTER_FULL_JID = "Full JID";
 	protected static final String ROSTER_APPROVED_STATUS = "Approved Status";
 	protected static final String ROSTER_PRESENCE = "Presence";
 
@@ -24,6 +27,7 @@ public class RosterPrinter extends AbstractRecordPrinter<RosterEntry>
 
 		REPORT_COLS.add(new ReportColumn(ROSTER_ENTRY_NAME, 50, "Name"));
 		REPORT_COLS.add(new ReportColumn(ROSTER_ENTRY_ID, 50, "Jid"));
+		REPORT_COLS.add(new ReportColumn(ROSTER_FULL_JID, 60, "Full Jid"));
 		REPORT_COLS.add(new ReportColumn(ROSTER_APPROVED_STATUS, 30, "Approved"));		
 		REPORT_COLS.add(new ReportColumn(ROSTER_PRESENCE, 30, "Presence"));		
 	
@@ -31,7 +35,7 @@ public class RosterPrinter extends AbstractRecordPrinter<RosterEntry>
 	
 	public RosterPrinter(Roster roster)
 	{
-		super(180, REPORT_COLS);
+		super(240, REPORT_COLS);
 		this.roster = roster;
 	}
 	
@@ -51,6 +55,18 @@ public class RosterPrinter extends AbstractRecordPrinter<RosterEntry>
 				final Presence presense = roster.getPresence(record.getJid());
 				return getPresenceDisplay(presense);
 
+			}
+			else if (column.header.equals(ROSTER_FULL_JID))
+			{
+				final Presence presense = roster.getPresence(record.getJid());
+				final Jid jid = presense.getFrom();
+				if (jid != null && jid instanceof EntityFullJid)
+				{
+					final EntityFullJid fullJid = (EntityFullJid)jid;
+					return fullJid.toString();
+				}
+
+				return "** NA **";
 			}
 			
 			return super.getColumnValue(column, record);
