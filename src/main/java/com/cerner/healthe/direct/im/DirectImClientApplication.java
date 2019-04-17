@@ -1,10 +1,14 @@
 package com.cerner.healthe.direct.im;
 
 import org.jivesoftware.smack.AbstractXMPPConnection;
+import org.jivesoftware.smack.ConnectionListener;
+import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.jivesoftware.smackx.bytestreams.ibb.InBandBytestreamManager;
 import org.jivesoftware.smackx.bytestreams.socks5.Socks5Proxy;
+import org.jivesoftware.smackx.filetransfer.FileTransferNegotiator;
 import org.nhindirect.common.tooling.Commands;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -27,6 +31,16 @@ public class DirectImClientApplication implements CommandLineRunner
 	
 	@Value("${direct.im.domain}")
 	protected String domain;
+
+	protected AbstractXMPPConnection con;
+	
+	protected XMPPTCPConnectionConfiguration xmppConfig;
+	
+	protected RosterCommands rosterCommands;
+	
+	protected ChatCommands chatCommands;
+	
+	protected FileTransferCommands fileTransferCommands;
 	
 	private static boolean exitOnEndCommands = true;
 	
@@ -40,23 +54,94 @@ public class DirectImClientApplication implements CommandLineRunner
 	{
 		
 		/*
-		 * disable the local SOCKS5 proxy in favor of a server proxy
+		 * disable the local SOCKS5 proxy in favor of a server proxy (if we decided to use SOCKS5)
 		 * local proxies are problematic when going across networks let alone organizational boundries
-		 * Smack uses the "ibb" property to indicate that only IBB should be use.  The use of SOCKS5 server proxies
-		 * still imposes a security risk as it is not encrypted by default.  
+		 * Smack uses the IBB_ONLY field to indicate that only IBB should be use.  The use of SOCKS5 server proxies
+		 * still imposes a security risk as they not encrypted by default.  
 		 * NOTE: The use of IBB is suppose to be used only as a fallback, however it is common denominator that meets the 
 		 * security requirements out of the box.  It is also VERY slow.
 		 * TODO: Looking for an alternative XEP that performs better and meets security requirements.
 		 */
 		Socks5Proxy.setLocalSocks5ProxyEnabled(false);
-		System.setProperty("ibb", "true");
+		FileTransferNegotiator.IBB_ONLY = true;
 		
-		final XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder().setUsernameAndPassword(username, password)
+		
+		
+		xmppConfig = XMPPTCPConnectionConfiguration.builder().setUsernameAndPassword(username, password)
 		.setXmppDomain(domain)
+		.setCompressionEnabled(true)
 		//.setSecurityMode(SecurityMode.required)
 		.build();
 		
-		final AbstractXMPPConnection con = new XMPPTCPConnection(config);
+		connect();
+		
+		runApp();
+
+		if (exitOnEndCommands)
+		{
+			Presence pres = new Presence(Presence.Type.unavailable);
+			pres.setStatus("Not testing anymore");
+			con.disconnect(pres);
+			System.exit(0);		
+		}
+	}
+
+	protected void connect() throws Exception
+	{
+		con = new XMPPTCPConnection(xmppConfig);
+		con.addConnectionListener(new ConnectionListener()
+		{
+			@Override
+			public void connected(XMPPConnection connection)
+			{
+				
+			}
+
+			@Override
+			public void authenticated(XMPPConnection connection, boolean resumed)
+			{
+				
+			}
+
+			@Override
+			public void connectionClosed()
+			{
+				
+			}
+
+			@Override
+			public void connectionClosedOnError(Exception e)
+			{
+				/*
+				 * for now just close and reconnect
+				 */
+				try
+				{
+					if (con != null && con.isConnected())
+						con.disconnect();
+				}
+				catch (Exception conExp)
+				{
+					/* no op */
+				}
+
+				System.out.println("Connection was closed.  Reconnecting");
+				try
+				{
+					connect();
+					rosterCommands.init(con);
+					chatCommands.init(con);
+					fileTransferCommands.init(con);
+				}
+				catch(Exception conExp)
+				{
+					
+				}
+	
+			}
+			
+			
+		});
 		
 		System.out.println("Connecting to server for domain: " + domain);
 		con.connect();
@@ -70,30 +155,28 @@ public class DirectImClientApplication implements CommandLineRunner
 		
 		System.out.println("Login successful.  IM Client is running.");
 		
-		runApp(con);
+		InBandBytestreamManager.getByteStreamManager(con).setDefaultBlockSize(16384);
 		
-		if (exitOnEndCommands)
-		{
-			pres = new Presence(Presence.Type.unavailable);
-			pres.setStatus("Not testing anymore");
-			con.disconnect(pres);
-			System.exit(0);		
-		}
 	}
 	
-	public void runApp(AbstractXMPPConnection con)
+	
+	public void runApp()
 	{
 		Commands commands = new Commands("Direct IM Client");
+
+		rosterCommands = new RosterCommands(con);
+		commands.register(rosterCommands);
 		
-		commands.register(new RosterCommands(con));
+		chatCommands = new ChatCommands(con);
+		commands.register(chatCommands);
 		
-		commands.register(new ChatCommands(con));
-		
-		commands.register(new FileTransferCommands(con));
+		fileTransferCommands = new FileTransferCommands(con);
+		commands.register(fileTransferCommands);
 		
 		commands.runInteractive();
+		
 	}
-
+	
 	/**
 	 * Determines if the application should exit when command processing is complete.  It may be desirable to set this 
 	 * to false if calling from another application context.  The default is true.

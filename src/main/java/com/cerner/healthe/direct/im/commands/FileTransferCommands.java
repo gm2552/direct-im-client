@@ -37,13 +37,21 @@ public class FileTransferCommands
 	
 	protected FileTransferManager transferManager;
 	
-	protected final Roster roster;
+	protected Roster roster;
 	
 	protected boolean acceptFiles = true;
 	
 	protected ExecutorService sendFileMonitorExecutor;
 	
 	public FileTransferCommands(AbstractXMPPConnection con)
+	{
+	
+		sendFileMonitorExecutor = Executors.newSingleThreadExecutor();	
+		
+		init(con);
+	}
+	
+	public void init(AbstractXMPPConnection con)
 	{
 		this.con = con;
 		
@@ -65,9 +73,6 @@ public class FileTransferCommands
 				}
 			}
 		});
-		
-		sendFileMonitorExecutor = Executors.newSingleThreadExecutor();
-		
 	}
 	
 	@Command(name = "SendFile", usage = SEND_FILE)

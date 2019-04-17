@@ -17,24 +17,29 @@ public class ChatCommands
             "\r\n\t contact: The username of the contact.  This is generally a full email address/Jabber id of the user." +
     		"\r\n\t message: The message to send to the contact.  This should eclose in a double quote (\" \") if the messge contains spaces.";
 	
-    protected final AbstractXMPPConnection con;
-	protected final ChatManager chatManager;
+    protected AbstractXMPPConnection con;
+	protected ChatManager chatManager;
     
     
     public ChatCommands(AbstractXMPPConnection con)
     {
-       this.con = con;
-       
-       chatManager = ChatManager.getInstanceFor(con);
-       
-       chatManager.addIncomingListener(new IncomingChatMessageListener() 
-       {
-    	   public void newIncomingMessage(EntityBareJid from, Message message, Chat chat) 
-    	   {
-    	      System.out.println("New message from " + from + ": " + message.getBody());
-    	      System.out.println(">");
-    	   }
-       });
+    	init(con);
+    }
+    
+    public void init(AbstractXMPPConnection con)
+    {
+    	this.con = con;
+    	
+        chatManager = ChatManager.getInstanceFor(con);
+        
+        chatManager.addIncomingListener(new IncomingChatMessageListener() 
+        {
+     	   public void newIncomingMessage(EntityBareJid from, Message message, Chat chat) 
+     	   {
+     	      System.out.println("New message from " + from + ": " + message.getBody());
+     	      System.out.println(">");
+     	   }
+        });
     }
     
 	@Command(name = "SendMessage", usage = SEND_MESSAGE)

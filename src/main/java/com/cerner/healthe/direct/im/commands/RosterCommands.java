@@ -27,13 +27,18 @@ public class RosterCommands
     		"\r\n  contact nickname " +
             "\r\n\t contact: The username of the contact.  This is generally a full email address/Jabber id of the user.";
     
-    protected final AbstractXMPPConnection con;
+    protected AbstractXMPPConnection con;
     
-    protected final Roster roster;
+    protected Roster roster;
     
-    protected final RosterPrinter rosterPrinter;
+    protected RosterPrinter rosterPrinter;
     
     public RosterCommands(AbstractXMPPConnection con)
+    {
+    	init(con);
+    }
+    
+    public void init(AbstractXMPPConnection con)
     {
     	System.out.println("Loading roster");
     	
