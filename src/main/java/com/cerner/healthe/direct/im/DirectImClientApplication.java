@@ -17,6 +17,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.cerner.healthe.direct.im.commands.ChatCommands;
 import com.cerner.healthe.direct.im.commands.FileTransferCommands;
+import com.cerner.healthe.direct.im.commands.RoomChatCommands;
 import com.cerner.healthe.direct.im.commands.RosterCommands;
 
 @SpringBootApplication
@@ -41,6 +42,8 @@ public class DirectImClientApplication implements CommandLineRunner
 	protected ChatCommands chatCommands;
 	
 	protected FileTransferCommands fileTransferCommands;
+	
+	protected RoomChatCommands roomChatCommands;
 	
 	private static boolean exitOnEndCommands = true;
 	
@@ -81,6 +84,7 @@ public class DirectImClientApplication implements CommandLineRunner
 		{
 			Presence pres = new Presence(Presence.Type.unavailable);
 			pres.setStatus("Not testing anymore");
+			//pres.setStatus("Available");
 			con.disconnect(pres);
 			System.exit(0);		
 		}
@@ -132,6 +136,7 @@ public class DirectImClientApplication implements CommandLineRunner
 					rosterCommands.init(con);
 					chatCommands.init(con);
 					fileTransferCommands.init(con);
+					roomChatCommands.init(con);
 				}
 				catch(Exception conExp)
 				{
@@ -172,6 +177,10 @@ public class DirectImClientApplication implements CommandLineRunner
 		
 		fileTransferCommands = new FileTransferCommands(con);
 		commands.register(fileTransferCommands);
+		
+		roomChatCommands = new RoomChatCommands(con);
+		commands.register(roomChatCommands);
+		
 		
 		commands.runInteractive();
 		
